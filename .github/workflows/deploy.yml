@@ -3,11 +3,11 @@ name: Deploy Drug Evaluation Pipeline
 on:
   push:
     branches:
-      - master
+      - main
       - develop
   pull_request:
     branches:
-      - master
+      - main
       - develop
   workflow_dispatch:
     inputs:
@@ -87,7 +87,7 @@ jobs:
   deploy-prod:
     name: Deploy to Production
     needs: validate
-    if: github.ref == 'refs/heads/master' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -113,7 +113,7 @@ jobs:
           echo "✅ Deployment to Production complete!"
 
       - name: Create GitHub Release
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
