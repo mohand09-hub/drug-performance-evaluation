@@ -1,0 +1,75 @@
+{
+  "project": {
+    "name": "drug-performance-evaluation",
+    "description": "Drug Performance Evaluation with Medallion Architecture and SCD2 Tracking"
+  },
+  "unity_catalog": {
+    "catalog": "drug_evaluation",
+    "schemas": {
+      "landing": "landing",
+      "bronze": "bronze",
+      "silver": "silver",
+      "gold": "gold"
+    },
+    "volume": {
+      "catalog": "drug_evaluation",
+      "schema": "landing",
+      "name": "raw_data",
+      "path": "/Volumes/drug_evaluation/landing/raw_data"
+    }
+  },
+  "data_files": {
+    "raw_reviews": "Drug.csv",
+    "clean_reviews": "Drug_clean.csv"
+  },
+  "pipeline": {
+    "bronze_batch_size": 10000,
+    "enable_quality_checks": true,
+    "enable_quarantine": false
+  },
+  "scd2": {
+    "enabled": true,
+    "tracked_tables": [
+      "dim_drugs"
+    ],
+    "business_keys": {
+      "dim_drugs": [
+        "drug_name"
+      ]
+    },
+    "tracked_columns": {
+      "dim_drugs": [
+        "average_price",
+        "drug_type",
+        "drug_form"
+      ]
+    },
+    "effective_date_column": "effective_date",
+    "end_date_column": "end_date",
+    "is_current_column": "is_current"
+  },
+  "tables": {
+    "landing": {
+      "metadata_tracking": "metadata_tracking"
+    },
+    "bronze": {
+      "drug_reviews_raw": "drug_reviews_raw",
+      "drug_reviews_clean": "drug_reviews_clean"
+    },
+    "silver": {
+      "dim_drugs": "dim_drugs",
+      "dim_drugs_history": "dim_drugs_history",
+      "dim_conditions": "dim_conditions",
+      "fact_drug_performance": "fact_drug_performance"
+    },
+    "gold": {
+      "drug_effectiveness_ranking": "drug_effectiveness_ranking",
+      "price_performance_analysis": "price_performance_analysis",
+      "condition_treatment_summary": "condition_treatment_summary"
+    }
+  },
+  "schedule": {
+    "enabled": false,
+    "cron_expression": "0 0 2 * * ?"
+  }
+}

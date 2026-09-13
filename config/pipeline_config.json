@@ -1,0 +1,20 @@
+{
+  "catalog": "drug_evaluation",
+  "schemas": {
+    "landing": "landing",
+    "bronze": "bronze",
+    "silver": "silver",
+    "gold": "gold"
+  },
+  "volume_path": "/Volumes/drug_evaluation/landing/raw_data",
+  "source_files": {
+    "raw": "Drug.csv",
+    "clean": "Drug_clean.csv"
+  },
+  "pipeline_name": "drug_evaluation_pipeline",
+  "target": "drug_evaluation.gold",
+  "data_quality": {
+    "enable_expectations": true,
+    "quarantine_invalid_records": true
+  }
+}

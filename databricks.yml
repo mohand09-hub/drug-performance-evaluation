@@ -1,0 +1,63 @@
+# Databricks Asset Bundle (DAB) Configuration
+# Drug Performance Evaluation Pipeline with SCD2 Tracking
+
+bundle:
+  name: drug-performance-evaluation
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: "Unity Catalog name"
+    default: "drug_evaluation"
+  
+  job_name:
+    description: "Name of the data pipeline job"
+    default: "Drug Evaluation Pipeline"
+  
+  schedule_cron:
+    description: "Cron schedule for pipeline execution"
+    default: "0 0 2 * * ?"  # Daily at 2 AM
+  
+  notification_email:
+    description: "Email for job notifications"
+    default: "mrdmohu@gmail.com"
+  
+  environment:
+    description: "Deployment environment"
+    default: "dev"
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-97d2bf38-c66c.cloud.databricks.com
+    
+    variables:
+      catalog: "drug_evaluation_dev"
+      job_name: "Drug Evaluation Pipeline - DEV"
+      environment: "dev"
+    
+    run_as:
+      user_name: mrdmohu@gmail.com
+  
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-97d2bf38-c66c.cloud.databricks.com
+      root_path: /Users/mrdmohu@gmail.com/.bundle/drug-performance-evaluation/prod
+    
+    variables:
+      catalog: "drug_evaluation"
+      job_name: "Drug Evaluation Pipeline - PROD"
+      environment: "prod"
+      schedule_cron: "0 0 2 * * ?"  # Daily at 2 AM
+    
+    run_as:
+      service_principal_name: "${var.service_principal_name}"
+    
+    permissions:
+      - level: CAN_VIEW
+        group_name: users
