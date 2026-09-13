@@ -56,3 +56,7 @@ secrets.json
 # Temporary files
 *.tmp
 *.bak
+
+# Exclude test/development notebooks
+*.ipynb
+!notebooks/*.ipynb
