@@ -3,23 +3,24 @@ resources:
     drug_evaluation_pipeline:
       name: "${var.job_name}"
       
-      # Define serverless environment (no client field - let Databricks choose)
-      environments:
-        - environment_key: drug_pipeline_serverless
-          spec:
-            dependencies:
-              - "pytz"
+      # Define shared serverless cluster
+      job_clusters:
+        - job_cluster_key: serverless_cluster
+          new_cluster:
+            num_workers: 0
+            spark_version: "auto:latest-lts"
+            data_security_mode: USER_ISOLATION
       
       tasks:
         - task_key: bronze_load
-          environment_key: drug_pipeline_serverless
+          job_cluster_key: serverless_cluster
           spark_python_task:
             python_file: ../scripts/bronze_load.py
             parameters:
               - ../config/project_config.json
         
         - task_key: silver_transform
-          environment_key: drug_pipeline_serverless
+          job_cluster_key: serverless_cluster
           depends_on:
             - task_key: bronze_load
           spark_python_task:
@@ -28,7 +29,7 @@ resources:
               - ../config/project_config.json
         
         - task_key: gold_analytics
-          environment_key: drug_pipeline_serverless
+          job_cluster_key: serverless_cluster
           depends_on:
             - task_key: silver_transform
           spark_python_task:
