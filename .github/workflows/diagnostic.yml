@@ -1,0 +1,193 @@
+name: Diagnostic Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    name: Diagnose Deployment Issues
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check secrets exist
+        run: |
+          echo "======================================"
+          echo "STEP 1: Check if secrets are set"
+          echo "======================================"
+          
+          if [ -z "$DATABRICKS_HOST" ]; then
+            echo "❌ DATABRICKS_HOST is NOT set"
+            exit 1
+          else
+            echo "✅ DATABRICKS_HOST is set"
+            echo "   Value preview: ${DATABRICKS_HOST:0:20}..."
+          fi
+          
+          if [ -z "$DATABRICKS_TOKEN" ]; then
+            echo "❌ DATABRICKS_TOKEN is NOT set"
+            exit 1
+          else
+            echo "✅ DATABRICKS_TOKEN is set"
+            echo "   Value preview: ${DATABRICKS_TOKEN:0:10}..."
+          fi
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+      - name: Check DATABRICKS_HOST format
+        run: |
+          echo "======================================"
+          echo "STEP 2: Validate DATABRICKS_HOST format"
+          echo "======================================"
+          
+          if [[ ! "$DATABRICKS_HOST" =~ ^https:// ]]; then
+            echo "❌ DATABRICKS_HOST must start with 'https://'"
+            echo "   Current: $DATABRICKS_HOST"
+            exit 1
+          else
+            echo "✅ DATABRICKS_HOST starts with 'https://'"
+          fi
+          
+          if [[ "$DATABRICKS_HOST" =~ /$ ]]; then
+            echo "❌ DATABRICKS_HOST should NOT end with trailing slash"
+            echo "   Current: $DATABRICKS_HOST"
+            exit 1
+          else
+            echo "✅ DATABRICKS_HOST has no trailing slash"
+          fi
+          
+          echo "✅ DATABRICKS_HOST format is correct"
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+
+      - name: Check DATABRICKS_TOKEN format
+        run: |
+          echo "======================================"
+          echo "STEP 3: Validate DATABRICKS_TOKEN format"
+          echo "======================================"
+          
+          if [[ ! "$DATABRICKS_TOKEN" =~ ^dapi ]]; then
+            echo "⚠️  WARNING: DATABRICKS_TOKEN does not start with 'dapi'"
+            echo "   Personal access tokens typically start with 'dapi'"
+          else
+            echo "✅ DATABRICKS_TOKEN starts with 'dapi'"
+          fi
+          
+          TOKEN_LENGTH=${#DATABRICKS_TOKEN}
+          echo "   Token length: $TOKEN_LENGTH characters"
+          
+          if [ $TOKEN_LENGTH -lt 30 ]; then
+            echo "❌ Token seems too short (< 30 chars)"
+            exit 1
+          else
+            echo "✅ Token length looks reasonable"
+          fi
+        env:
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+      - name: Install Databricks CLI
+        run: |
+          echo "======================================"
+          echo "STEP 4: Install Databricks CLI"
+          echo "======================================"
+          
+          curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+          databricks --version
+          echo "✅ Databricks CLI installed"
+
+      - name: Test authentication
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          echo "======================================"
+          echo "STEP 5: Test Databricks authentication"
+          echo "======================================"
+          
+          # Try to list workspaces (simple API call)
+          if databricks current-user me 2>&1 | grep -q "Error"; then
+            echo "❌ Authentication failed!"
+            echo "Possible causes:"
+            echo "  1. Token is expired"
+            echo "  2. Token is invalid"
+            echo "  3. Wrong workspace URL"
+            databricks current-user me
+            exit 1
+          else
+            echo "✅ Authentication successful!"
+            databricks current-user me
+          fi
+
+      - name: Check bundle files exist
+        run: |
+          echo "======================================"
+          echo "STEP 6: Check required bundle files"
+          echo "======================================"
+          
+          if [ ! -f "databricks.yml" ]; then
+            echo "❌ databricks.yml NOT FOUND"
+            exit 1
+          else
+            echo "✅ databricks.yml exists"
+          fi
+          
+          if [ ! -f "resources/pipeline_job.yml" ]; then
+            echo "❌ resources/pipeline_job.yml NOT FOUND"
+            exit 1
+          else
+            echo "✅ resources/pipeline_job.yml exists"
+          fi
+          
+          if [ ! -f "config/project_config.json" ]; then
+            echo "❌ config/project_config.json NOT FOUND"
+            exit 1
+          else
+            echo "✅ config/project_config.json exists"
+          fi
+          
+          echo ""
+          echo "File structure:"
+          ls -la
+          
+          echo ""
+          echo "Scripts directory:"
+          ls -la scripts/ || echo "scripts/ not found"
+
+      - name: Validate bundle
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          echo "======================================"
+          echo "STEP 7: Validate DABs bundle"
+          echo "======================================"
+          
+          if databricks bundle validate; then
+            echo "✅ Bundle validation PASSED"
+          else
+            echo "❌ Bundle validation FAILED"
+            echo "See error above for details"
+            exit 1
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "======================================"
+          echo "DIAGNOSTIC SUMMARY"
+          echo "======================================"
+          echo ""
+          echo "If all steps passed:"
+          echo "  → Secrets are configured correctly"
+          echo "  → Authentication works"
+          echo "  → Bundle is valid"
+          echo "  → Deployment workflow should work!"
+          echo ""
+          echo "If a step failed:"
+          echo "  → Check the error message above"
+          echo "  → Fix the issue identified"
+          echo "  → Re-run this diagnostic workflow"
+          echo ""
