@@ -3,17 +3,8 @@ resources:
     drug_evaluation_pipeline:
       name: "${var.job_name}"
       
-      job_clusters:
-        - job_cluster_key: main_cluster
-          new_cluster:
-            spark_version: "15.4.x-scala2.12"
-            node_type_id: "i3.xlarge"
-            num_workers: 2
-            data_security_mode: "USER_ISOLATION"
-      
       tasks:
         - task_key: bronze_load
-          job_cluster_key: main_cluster
           spark_python_task:
             python_file: ../scripts/bronze_load.py
             parameters:
@@ -23,7 +14,6 @@ resources:
                 package: "databricks-sdk>=0.30.0"
         
         - task_key: silver_transform
-          job_cluster_key: main_cluster
           depends_on:
             - task_key: bronze_load
           spark_python_task:
@@ -35,7 +25,6 @@ resources:
                 package: "databricks-sdk>=0.30.0"
         
         - task_key: gold_analytics
-          job_cluster_key: main_cluster
           depends_on:
             - task_key: silver_transform
           spark_python_task:
