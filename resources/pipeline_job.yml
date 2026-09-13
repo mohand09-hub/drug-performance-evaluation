@@ -3,11 +3,10 @@ resources:
     drug_evaluation_pipeline:
       name: "${var.job_name}"
       
-      # Define serverless environment (replaces job_clusters)
+      # Define serverless environment (no client field - let Databricks choose)
       environments:
         - environment_key: drug_pipeline_serverless
           spec:
-            client: "1"
             dependencies:
               - "pytz"
       
