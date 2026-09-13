@@ -6,7 +6,6 @@ resources:
       environments:
         - environment_key: serverless_env
           spec:
-            client: "1"
             dependencies:
               - "databricks-sdk>=0.30.0"
       
