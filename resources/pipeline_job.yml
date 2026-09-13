@@ -7,6 +7,8 @@ resources:
         - environment_key: serverless_env
           spec:
             client: "1"
+            dependencies:
+              - "databricks-sdk>=0.30.0"
       
       tasks:
         - task_key: bronze_load
@@ -15,9 +17,6 @@ resources:
             python_file: ../scripts/bronze_load.py
             parameters:
               - ../config/project_config.json
-          libraries:
-            - pypi:
-                package: "databricks-sdk>=0.30.0"
         
         - task_key: silver_transform
           environment_key: serverless_env
@@ -27,9 +26,6 @@ resources:
             python_file: ../scripts/silver_transform.py
             parameters:
               - ../config/project_config.json
-          libraries:
-            - pypi:
-                package: "databricks-sdk>=0.30.0"
         
         - task_key: gold_analytics
           environment_key: serverless_env
@@ -39,9 +35,6 @@ resources:
             python_file: ../scripts/gold_analytics.py
             parameters:
               - ../config/project_config.json
-          libraries:
-            - pypi:
-                package: "databricks-sdk>=0.30.0"
       
       schedule:
         quartz_cron_expression: "${var.schedule_cron}"
